@@ -9,10 +9,11 @@ import java.util.*;
 import java.util.stream.IntStream;
 
 @Fork(value = 3, jvmArgs = {"-Xms2G", "-Xmx2G"})
-@Warmup(iterations=5)
+@Warmup(iterations = 5)
+@Measurement(iterations = 5)
 public class MyBenchmark {
     private static final int LOOKUPS = 10;
-    private static final int ELEMENTS = 30;
+    private static final int ELEMENTS = 20;
 
     // State class containing a useful state to use!
     @State(Scope.Benchmark)
@@ -114,7 +115,6 @@ public class MyBenchmark {
         return x.elementToTrueMap.containsKey(id);
     }
 
-
     @Benchmark
     public void fromSet(BenchmarkState x, Blackhole blackhole) {
         for (final int id: x.elementLookups) {
@@ -124,6 +124,30 @@ public class MyBenchmark {
 
     public boolean findFromSet(BenchmarkState x, int id) {
         return x.elementSet.contains(id);
+    }
+
+    @Benchmark
+    public void searchBinarySearch(BenchmarkState x, Blackhole blackhole) {
+        for (final int id: x.elementLookups) {
+            blackhole.consume(findFromBinarySearch(x, id));
+        }
+    }
+
+    public boolean findFromBinarySearch(BenchmarkState x, int id) {
+        return Arrays.binarySearch(x.elementsSorted, id) > 0;
+    }
+
+    public static void main(String[] a) {
+        MyBenchmark m  = new MyBenchmark();
+        BenchmarkState x = new BenchmarkState();
+        int id = x.elementLookups[0];
+
+        System.out.println(m.findFromArraySorted(x, id));
+        System.out.println(m.findFromArrayUnsorted(x, id));
+        System.out.println(m.findFromBinarySearch(x, id));
+        System.out.println(m.findFromMap(x, id));
+        System.out.println(m.findFromMapContainsKey(x, id));
+        System.out.println(m.findFromSet(x, id));
     }
 }
 
